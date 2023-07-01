@@ -34,4 +34,4 @@ spec:
       - name: branch
         value: master
       - name: pathInRepo
-        value: pipeline/cloudnative-devsecops-demo.yaml
+        value: pipelines/cloudnative-devsecops-demo.yaml
