@@ -15,7 +15,6 @@ metadata:
     # with taskRef and it will automatically be embedded into our pipeline.
     pipelinesascode.tekton.dev/task: "git-clone"
     pipelinesascode.tekton.dev/provider: "github"
-     pipelinesascode.tekton.dev/event-id: "cfc510d4-17c4-11ee-8fde-6af3564d8ae6"
     
     # Use maven task from hub
     #
