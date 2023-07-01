@@ -37,8 +37,7 @@ spec:
     - name: IMAGE
       value: quay.io/bgirriam/pipelines-vote-ui
   pipelineRef:
-    name: "cloudnative-devsecops-demo"
-    namespace: pipelines-tutorial
+    - name: cloudnative-devsecops-demo
   timeout: 2h0m0s
   workspaces:
     - name: shared-workspace
