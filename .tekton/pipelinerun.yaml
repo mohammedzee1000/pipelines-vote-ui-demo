@@ -27,6 +27,9 @@ metadata:
     # How many runs we want to keep.
     pipelinesascode.tekton.dev/max-keep-runs: "5"
 spec:
+  pipelineRef:
+    name: cloudnative-devsecops-demo
+    namespace: pipelines-tutorial
   params:
     - name: deployment-name
       value: pipelines-vote-ui
@@ -36,8 +39,6 @@ spec:
       value: master
     - name: IMAGE
       value: quay.io/bgirriam/pipelines-vote-ui
-  pipelineRef:
-    - name: cloudnative-devsecops-demo
   timeout: 2h0m0s
   workspaces:
     - name: shared-workspace
