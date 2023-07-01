@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: pipelines-vote
+  name: pipelines-vote-ui
   annotations:
     # The event we are targeting as seen from the webhook payload
     # this can be an array too, i.e: [pull_request, push]
@@ -34,12 +34,56 @@ spec:
       value: "{{ repo_url }}"
     - name: revision
       value: "{{ revision }}"
-  pipelineRef:
-    resolver: git
+  pipelineSpec:
     params:
-      - name: url
-        value: https://github.com/basavaraju-g/pipelines-vote-ui.git
-      - name: branch
-        value: master
-      - name: pathInRepo
-        value: pipelines/cloudnative-devsecops-demo.yaml
+      - name: repo_url
+      - name: revision
+    workspaces:
+      - name: source
+      - name: basic-auth
+    tasks:
+      - name: fetch-repository
+        taskRef:
+          name: git-clone
+          kind: ClusterTask
+        workspaces:
+          - name: output
+            workspace: source
+          - name: basic-auth
+            workspace: basic-auth
+        params:
+          - name: url
+            value: $(params.repo_url)
+          - name: revision
+            value: $(params.revision)
+      # Customize this task if you like, or just do a taskRef
+      # to one of the hub task.
+      - name: noop-task
+        runAfter:
+          - fetch-repository
+        workspaces:
+          - name: source
+            workspace: source
+        taskSpec:
+          workspaces:
+            - name: source
+          steps:
+            - name: noop-task
+              image: registry.access.redhat.com/ubi9/ubi-micro
+              workingDir: $(workspaces.source.path)
+              script: |
+                exit 0
+  workspaces:
+  - name: source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  # This workspace will inject secret to help the git-clone task to be able to
+  # checkout the private repositories
+  - name: basic-auth
+    secret:
+      secretName: "{{ git_auth_secret }}"
