@@ -1,0 +1,116 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: cloudnative-devsecops-demo
+  namespace: pipelines-tutorial
+spec:
+  params:
+    - default: deployment-name=pipelines-vote-ui
+      description: name of the deployment to be patched
+      name: deployment-name
+      type: string
+    - default: 'https://github.com/basavaraju-g/pipelines-vote-ui.git'
+      description: url of the git repo for the code of deployment
+      name: git-url
+      type: string
+    - default: master
+      description: revision to be used from repo of the code for deployment
+      name: git-revision
+      type: string
+    - default: quay.io/bgirriam/pipelines-vote-ui
+      description: image to be build from the code
+      name: IMAGE
+      type: string
+  tasks:
+    - name: fetch-repository
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: subdirectory
+          value: ''
+        - name: deleteExisting
+          value: 'true'
+        - name: revision
+          value: $(params.git-revision)
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: build-image
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+        - name: IMAGE_PUSH_SECRET_NAME
+          value: image-push-secrets
+      runAfter:
+        - codescan-sonarqube
+      taskRef:
+        kind: ClusterTask
+        name: buildah
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+        - name: dockerconfig
+          workspace: docker-credentials
+    - name: image-scan-quay
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+      runAfter:
+        - build-image
+      taskRef:
+        kind: Task
+        name: image-scan-quay-registry
+    - name: apply-manifests
+      runAfter:
+        - image-scan-quay
+      taskRef:
+        kind: Task
+        name: apply-manifests
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+    - name: verify-image-notary-chains
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+      runAfter:
+        - apply-manifests
+      taskRef:
+        kind: Task
+        name: image-attestation
+    - name: deploy-app
+      params:
+        - name: deployment
+          value: $(params.deployment-name)
+        - name: IMAGE
+          value: $(params.IMAGE)
+      runAfter:
+        - verify-image-notary-chains
+      taskRef:
+        kind: Task
+        name: update-ui-ocp
+    - name: codescan-sonarqube
+      params:
+        - name: git-url
+          value: $(params.git-url)
+        - name: git-revision
+          value: $(params.git-revision)
+        - name: app-name
+          value: ''
+        - name: deleteExisting
+          value: 'true'
+        - name: source-dir
+          value: /source
+        - name: sonarqube-cli
+          value: 'quay.io/bgirriam/sonar-scanner-cli-docker:ubi9'
+      runAfter:
+        - fetch-repository
+      taskRef:
+        kind: Task
+        name: sonar-test
+  workspaces:
+    - name: shared-workspace
+    - name: docker-credentials
