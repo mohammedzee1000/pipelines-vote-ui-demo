@@ -35,22 +35,11 @@ spec:
     - name: revision
       value: "{{ revision }}"
   pipelineRef:
-    name: cloudnative-devsecops-demo
-  serviceAccountName: pipeline
-  timeout: 2h0m0s
-  params:
-    - name: deployment-name
-      value: pipelines-vote-ui
-    - name: git-url
-      value: 'https://github.com/basavaraju-g/pipelines-vote-ui.git'
-    - name: git-revision
-      value: master
-    - name: IMAGE
-      value: quay.io/bgirriam/pipelines-vote-ui
-  workspaces:
-    - name: shared-workspace
-      persistentVolumeClaim:
-        claimName: pipelines-demo-pvc
-    - name: docker-credentials
-      secret:
-        secretName: registry-access
+    resolver: git
+    params:
+      - name: url
+        value: https://github.com/basavaraju-g/pipelines-vote-ui
+      - name: branch
+        value: master
+      - name: pathInRepo
+        value: pipelines/cloudnative-devsecops-demo.yaml
