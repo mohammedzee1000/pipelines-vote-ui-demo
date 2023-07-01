@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: pipelines-vote-ui
+  name: cloudnative-devsecops-pipelines
   annotations:
     # The event we are targeting as seen from the webhook payload
     # this can be an array too, i.e: [pull_request, push]
@@ -29,7 +29,7 @@ metadata:
 spec:
   params:
     - name: deployment-name
-      value: deployment-name=pipelines-vote-ui
+      value: pipelines-vote-ui
     - name: git-url
       value: 'https://github.com/basavaraju-g/pipelines-vote-ui.git'
     - name: git-revision
