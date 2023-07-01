@@ -3,7 +3,6 @@ apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   name: cloudnative-devsecops-pipelines
-  namespace: pipelines-tutorial
   annotations:
     # The event we are targeting as seen from the webhook payload
     # this can be an array too, i.e: [pull_request, push]
@@ -39,6 +38,7 @@ spec:
       value: quay.io/bgirriam/pipelines-vote-ui
   pipelineRef:
     name: cloudnative-devsecops-demo
+    namespace: pipelines-tutorial
   serviceAccountName: pipeline
   timeout: 2h0m0s
   workspaces:
