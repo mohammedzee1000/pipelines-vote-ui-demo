@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: pipelines-vote-ui
+  name: cloudnative-devsecops-ui
   annotations:
     # The event we are targeting as seen from the webhook payload
     # this can be an array too, i.e: [pull_request, push]
@@ -36,54 +36,113 @@ spec:
       value: "{{ revision }}"
   pipelineSpec:
     params:
-      - name: repo_url
-      - name: revision
-    workspaces:
-      - name: source
-      - name: basic-auth
+      - default: pipelines-vote-ui
+        description: name of the deployment to be patched
+        name: deployment-name
+        type: string
+      - default: master
+        description: revision to be used from repo of the code for deployment
+        name: revision
+        type: string
+      - default: 'https://github.com/basavaraju-g/pipelines-vote-ui.git'
+        description: url of the git repo for the code of deployment
+        name: repo_url
+        type: string
+      - default: quay.io/bgirriam/pipelines-vote-ui
+        description: image to be build from the code
+        name: IMAGE
+        type: string
     tasks:
       - name: fetch-repository
-        taskRef:
-          name: git-clone
-          kind: ClusterTask
-        workspaces:
-          - name: output
-            workspace: source
-          - name: basic-auth
-            workspace: basic-auth
         params:
           - name: url
-            value: $(params.repo_url)
+            value: 'https://github.com/basavaraju-g/pipelines-vote-ui.git'
+          - name: subdirectory
+            value: ''
+          - name: deleteExisting
+            value: 'true'
           - name: revision
-            value: $(params.revision)
-      # Customize this task if you like, or just do a taskRef
-      # to one of the hub task.
-      - name: noop-task
+            value: master
+        taskRef:
+          kind: ClusterTask
+          name: git-clone
+        workspaces:
+          - name: output
+            workspace: shared-workspace
+          - name: build-image
+      - name: build-image
+        params:
+          - name: IMAGE
+            value: quay.io/bgirriam/pipelines-vote-ui
+          - name: IMAGE_PUSH_SECRET_NAME
+            value: image-push-secrets
         runAfter:
-          - fetch-repository
+          - codescan-sonarqube
+        taskRef:
+          kind: ClusterTask
+          name: buildah
         workspaces:
           - name: source
-            workspace: source
-        taskSpec:
-          workspaces:
-            - name: source
-          steps:
-            - name: noop-task
-              image: registry.access.redhat.com/ubi9/ubi-micro
-              workingDir: $(workspaces.source.path)
-              script: |
-                exit 0
+            workspace: shared-workspace
+          - name: dockerconfig
+            workspace: docker-credentials
+      - name: image-scan-quay
+        params:
+          - name: IMAGE
+            value: quay.io/bgirriam/pipelines-vote-ui
+        runAfter:
+          - build-image
+        taskRef:
+          kind: Task
+          name: image-scan-quay-registry
+      - name: apply-manifests
+        runAfter:
+          - image-scan-quay
+        taskRef:
+          kind: Task
+          name: apply-manifests
+        workspaces:
+          - name: source
+            workspace: shared-workspace
+      - name: verify-image-notary-chains
+        params:
+          - name: IMAGE
+            value: quay.io/bgirriam/pipelines-vote-ui
+        runAfter:
+          - apply-manifests
+        taskRef:
+          kind: Task
+          name: image-attestation
+      - name: deploy-app
+        params:
+          - name: deployment
+            value: deployment-name=pipelines-vote-ui
+          - name: IMAGE
+            value: quay.io/bgirriam/pipelines-vote-ui
+        runAfter:
+          - verify-image-notary-chains
+        taskRef:
+          kind: Task
+          name: update-ui-ocp
+      - name: codescan-sonarqube
+        params:
+          - name: repo_url
+            value: 'https://github.com/basavaraju-g/pipelines-vote-ui.git'
+          - name: revision
+            value: master
+          - name: app-name
+            value: ''
+          - name: deleteExisting
+            value: 'true'
+          - name: source-dir
+            value: /source
+          - name: sonarqube-cli
+            value: 'quay.io/bgirriam/sonar-scanner-cli-docker:ubi9'
+        runAfter:
+          - fetch-repository
+        taskRef:
+          kind: Task
+          name: sonar-test
   workspaces:
-  - name: source
-    volumeClaimTemplate:
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
-  # This workspace will inject secret to help the git-clone task to be able to
-  # checkout the private repositories
-  - name: basic-auth
-    secret:
-      secretName: "{{ git_auth_secret }}"
+  - name: shared-workspace
+  - name: docker-credentials
