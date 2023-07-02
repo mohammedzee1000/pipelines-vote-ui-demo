@@ -145,4 +145,8 @@ spec:
           name: sonar-test
   workspaces:
   - name: shared-workspace
+    persistentVolumeClaim:
+      claimName: pipelines-demo-pvc
   - name: docker-credentials
+    secret:
+      secretName: registry-access
