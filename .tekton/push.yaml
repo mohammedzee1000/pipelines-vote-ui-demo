@@ -93,7 +93,7 @@ spec:
         runAfter:
           - build-image
         taskRef:
-          kind: Task
+          kind: ClusterTask
           name: image-scan-quay-registry
       - name: apply-manifests
         runAfter:
