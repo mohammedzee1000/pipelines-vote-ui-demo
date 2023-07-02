@@ -99,7 +99,7 @@ spec:
         runAfter:
           - image-scan-quay
         taskRef:
-          kind: Task
+          kind: ClusterTask
           name: apply-manifests
         workspaces:
           - name: source
@@ -111,7 +111,7 @@ spec:
         runAfter:
           - apply-manifests
         taskRef:
-          kind: Task
+          kind: ClusterTask
           name: image-attestation
       - name: deploy-app
         params:
@@ -122,7 +122,7 @@ spec:
         runAfter:
           - verify-image-notary-chains
         taskRef:
-          kind: Task
+          kind: ClusterTask
           name: update-ui-ocp
       - name: codescan-sonarqube
         params:
@@ -141,7 +141,7 @@ spec:
         runAfter:
           - fetch-repository
         taskRef:
-          kind: Task
+          kind: ClusterTask
           name: sonar-test
   workspaces:
   - name: shared-workspace
