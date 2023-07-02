@@ -69,7 +69,6 @@ spec:
         workspaces:
           - name: output
             workspace: shared-workspace
-          - name: build-image
       - name: build-image
         params:
           - name: IMAGE
