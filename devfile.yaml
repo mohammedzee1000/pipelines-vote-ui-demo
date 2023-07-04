@@ -1,0 +1,58 @@
+apiVersion: 2.0.0
+metadata:
+  name: pipelines-vote-ui
+  namespace: pipelines-vote-ui
+
+components:
+  - name: pipelines-vote-ui
+    type: git
+    metadata:
+      repository: https://github.com/basavaraju-G/pipelines-vote-ui
+      revision: main
+    binaryBuild:
+      enabled: false
+    sourceBuild:
+      enabled: true
+      buildCommand: npm install
+    paths:
+      - path: .
+
+  - name: nodejs
+    type: dockerimage
+    metadata:
+      image: node:latest
+    env:
+      - name: NODE_ENV
+        value: development
+    volumes:
+      - name: pipelines-vote-ui
+        containerPath: /app
+        sync:
+          type: ifmounted
+
+  - name: vscode
+    type: vscode
+    metadata:
+      image: vscodium/vscodium:latest
+    volumes:
+      - name: pipelines-vote-ui
+        containerPath: /app
+        sync:
+          type: ifmounted
+
+projects:
+  - name: pipelines-vote-ui-dev
+    components:
+      - name: pipelines-vote-ui
+        mountSources: true
+      - name: nodejs
+        mountSources: true
+      - name: vscode
+        mountSources: true
+    commands:
+      - name: start
+        actions:
+          - name: start-ui
+            component: pipelines-vote-ui
+            command: npm start
+            terminal: vscode
