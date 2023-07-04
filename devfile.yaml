@@ -1,4 +1,4 @@
-apiVersion: 3
+schemaVersion: 2.1.0
 metadata:
   name: pipelines-vote-ui
   namespace: pipelines-vote-ui
@@ -10,21 +10,22 @@ components:
       repository: https://github.com/basavaraju-G/pipelines-vote-ui
       revision: main
     container:
-      image: registry.access.redhat.com/ubi8/nodejs-16:latest
+      image: node:latest
       env:
-        - name: DEBUG_PORT
-          value: "5858"
+        - name: NODE_ENV
+          value: development
       volumeMounts:
         - name: pipelines-vote-ui
           path: /app
-      endpoints:
-        - name: http-node
-          targetPort: 3000
-        - name: debug
-          targetPort: 5858
-          exposure: none
-    memoryLimit: 1024Mi
-    mountSources: true
+
+  - name: vscode
+    type: vscode
+    metadata:
+      image: vscodium/vscodium:latest
+    container:
+      volumeMounts:
+        - name: pipelines-vote-ui
+          path: /app
 
 volumes:
   - name: pipelines-vote-ui
@@ -43,32 +44,14 @@ projects:
             path: /app
         container:
           workingDir: /app
-    tasks:
-      - name: install
-        steps:
-          - name: npm-install
-            command: npm install
+      - name: vscode
+        container:
+          workingDir: /app
+    commands:
+      - id: start
+        actions:
+          - name: start-ui
             component: pipelines-vote-ui
-            container:
-              workingDir: /app
-      - name: run
-        steps:
-          - name: npm-start
             command: npm start
-            component: pipelines-vote-ui
             container:
-              workingDir: /app
-      - name: debug
-        steps:
-          - name: npm-debug
-            command: npm run debug
-            component: pipelines-vote-ui
-            container:
-              workingDir: /app
-      - name: test
-        steps:
-          - name: npm-test
-            command: npm test
-            component: pipelines-vote-ui
-            container:
-              workingDir: /app
+              terminal: vscode
