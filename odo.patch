@@ -1,0 +1,28 @@
+diff --git a/devfile.yaml b/devfile.yaml
+index c085de4..3c4aa6c 100644
+--- a/devfile.yaml
++++ b/devfile.yaml
+@@ -38,6 +38,10 @@ components:
+     env:
+     - name: DEBUG_PORT
+       value: "5858"
++    - name: VOTING_API_SERVICE_HOST
++      value: pipelines-vote-api
++    - name: VOTING_API_SERVICE_PORT
++      value: "9000"
+     image: registry.access.redhat.com/ubi9/python-39:1-117.1684741281
+     mountSources: true
+   name: py
+@@ -60,9 +64,9 @@ metadata:
+   version: 2.1.0
+ schemaVersion: 2.1.0
+ starterProjects:
+-- description: 'Flask is a web framework, it’s a Python module that lets you develop
+-    web applications easily. It’s has a small and easy-to-extend core: it’s a microframework
+-    that doesn’t include an ORM (Object Relational Manager) or such features.'
++- description: 'Flask is a web framework, it's a Python module that lets you develop
++    web applications easily. It's has a small and easy-to-extend core: it's a microframework
++    that doesn't include an ORM (Object Relational Manager) or such features.'
+   git:
+     remotes:
+       origin: https://github.com/Basavaraju-G/pipelines-vote-ui
