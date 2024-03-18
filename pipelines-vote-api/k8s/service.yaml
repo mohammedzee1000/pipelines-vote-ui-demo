@@ -5,10 +5,10 @@ metadata:
     app: pipelines-vote-api
   name: pipelines-vote-api
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 9000
-      nodePort: 31000
+      nodePort: 9000
   selector:
     app: pipelines-vote-api

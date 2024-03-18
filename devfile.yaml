@@ -41,7 +41,7 @@ components:
     - name: VOTING_API_SERVICE_HOST
       value: pipelines-vote-api
     - name: VOTING_API_SERVICE_PORT
-      value: "31000"
+      value: "9000"
     image: registry.access.redhat.com/ubi9/python-39:1-117.1684741281
     mountSources: true
   name: py
